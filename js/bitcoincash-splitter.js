@@ -16,7 +16,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 	$scope.transaction = { address: '', txid: '' };
 	$scope.error = { code: '' };
 	$scope.segwit = { segwit: false };
-	$scope.fee = [ { conservative: 200 } ];
+	$scope.fee = [ { conservative: 30 } ];
 
 	/*$http.get ('https://estimatesmartfee.com/json.json').success (function (data) {
 		$scope.fee = data;
