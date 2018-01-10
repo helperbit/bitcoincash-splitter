@@ -128,7 +128,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 					! ('pubkey' in $scope.npo.backup[i].data) ||
 					! ('walletid' in $scope.npo.backup[i].data)) {
 
-					$scope.segwit.segwit = $scope.npo.backup[i].data.segwit || false;
+					//$scope.segwit.segwit = $scope.npo.backup[i].data.segwit || false;
 					$scope.npo.backup[i].error = 'XNJ';
 					$scope.deployError ('XNJ');
 					$scope.npo.loading = false;
@@ -202,19 +202,19 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		var pubkeys_raw = $scope.npo.pubkeys.map(function (hex /*: string*/) { return new buffer.Buffer (hex, 'hex'); });
 
 
-		if ($scope.segwit.segwit) {
+		/*if ($scope.segwit.segwit) {
 			var witnessScript = bitcoin.script.multisig.output.encode (parseInt ($scope.npo.n), pubkeys_raw);
 			var redeemScript = bitcoin.script.witnessScriptHash.output.encode (bitcoin.crypto.sha256(witnessScript));
 			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160(redeemScript));
 			var address = bitcoin.address.fromOutputScript(scriptPubKey, bnetwork);			
-		} else {
+		} else {*/
 			var redeemScript = bitcoin.script.multisig.output.encode (parseInt ($scope.npo.n), pubkeys_raw);
 			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
 			var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
-		}
+		//}
 
 		console.log (address);
-		console.log ('segwit',$scope.segwit.segwit);
+		//console.log ('segwit',$scope.segwit.segwit);
 
 		/* Get unspent */
 		$http.get ('https://chain.so/api/v2/get_tx_unspent/' + cnetwork + '/' + address).success (function (data) {
@@ -247,11 +247,11 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
 				for (var z = 0; z < parseInt ($scope.npo.n); z++) {
-					if ($scope.segwit.segwit) {
+					/*if ($scope.segwit.segwit) {
 						txb.sign (j, $scope.npo.backup[z].pair, redeemScript, null, txs[j].value * 100000000, witnessScript);
-					} else {
+					} else {*/
 						txb.sign (j, $scope.npo.backup[z].pair, redeemScript);
-					}
+					//}
 				}
 			}
 
@@ -399,7 +399,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		if (! ('encprivkey' in $scope.user.backup.data) ||
 			! ('address' in $scope.user.backup.data) ||
 			! ('pubkey' in $scope.user.backup.data)) {
-			$scope.segwit.segwit = $scope.user.backup.data.segwit || false;
+			//$scope.segwit.segwit = $scope.user.backup.data.segwit || false;
 			$scope.user.error = 'XNJ';
 			$scope.deployError ('XNJ');
 			return;
@@ -462,16 +462,16 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		
 		var pubkeys_raw = $scope.user.backup.data.pubkeys.map(function (hex /*: string*/) { return new buffer.Buffer (hex, 'hex'); });
 
-		if ($scope.segwit.segwit) {
+		/*if ($scope.segwit.segwit) {
 			var witnessScript = bitcoin.script.multisig.output.encode (2, pubkeys_raw);
 			var redeemScript = bitcoin.script.witnessScriptHash.output.encode (bitcoin.crypto.sha256(witnessScript));
 			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160(redeemScript));
 			var address = bitcoin.address.fromOutputScript(scriptPubKey, bnetwork);			
-		} else {
+		} else {*/
 			var redeemScript = bitcoin.script.multisig.output.encode (2, pubkeys_raw);
 			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
 			var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
-		}
+		//}
 
 		/* Get unspent */
 		$http.get ('https://chain.so/api/v2/get_tx_unspent/' + cnetwork + '/' + $scope.user.backup.data.address).success (function (data) {
@@ -504,13 +504,13 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
-				if ($scope.segwit.segwit) {
+				/*if ($scope.segwit.segwit) {
 					txb.sign (j, pair1, redeemScript, null, txs[j].value * 100000000, witnessScript);
 					txb.sign (j, pair2, redeemScript, null, txs[j].value * 100000000, witnessScript);
-				} else {
+				} else {*/
 					txb.sign (j, pair1, redeemScript);
 					txb.sign (j, pair2, redeemScript);
-				}
+				//}
 			}
 
 			/* Create the signed transaction */
