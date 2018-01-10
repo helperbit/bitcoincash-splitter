@@ -205,6 +205,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			var redeemScript = bitcoin.script.multisig.output.encode (parseInt ($scope.npo.n), pubkeys_raw);
 			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
 			var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
+			var spk = bitcoin.script.pubKey.output.encode(pubkeys_raw);
 		//}
 
 		console.log (address);
@@ -219,7 +220,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 
 			for (var i = 0; i < txs.length; i++) {
 				cumulative += parseFloat (txs[i].amount);
-				txb.addInput (txs[i].txid, txs[i].vout);
+				txb.addInput (txs[i].txid, txs[i].vout, bitcoin.Transaction.DEFAULT_SEQUENCE, spk);
 			}
 
 			if (cumulative == 0 || cumulative - fee < 0) {
@@ -238,13 +239,18 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 				return;
 			}
 
+			txb.enableBitcoinCash(true);
+			txb.setVersion(2);
+
+			var hashType = bitcoin.Transaction.SIGHASH_ALL | bitcoin.Transaction.SIGHASH_BITCOINCASHBIP143;
+
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
 				for (var z = 0; z < parseInt ($scope.npo.n); z++) {
 					/*if ($scope.segwit.segwit) {
 						txb.sign (j, $scope.npo.backup[z].pair, redeemScript, null, txs[j].value * 100000000, witnessScript);
 					} else {*/
-						txb.sign (j, $scope.npo.backup[z].pair, redeemScript);
+						txb.sign (j, $scope.npo.backup[z].pair, redeemScript, null, hashType, txs[j].value * 100000000);
 					//}
 				}
 			}
@@ -465,6 +471,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			var redeemScript = bitcoin.script.multisig.output.encode (2, pubkeys_raw);
 			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
 			var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
+			var spk = bitcoin.script.pubKey.output.encode(pubkeys_raw);
 		//}
 
 		/* Get unspent */
@@ -476,7 +483,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 
 			for (var i = 0; i < txs.length; i++) {
 				cumulative += parseFloat (txs[i].amount);
-				txb.addInput (txs[i].txid, txs[i].vout);
+				txb.addInput (txs[i].txid, txs[i].vout, bitcoin.Transaction.DEFAULT_SEQUENCE, spk);
 			}
 
 
@@ -496,14 +503,19 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 				return;
 			}
 
+			txb.enableBitcoinCash(true);
+			txb.setVersion(2);
+
+			var hashType = bitcoin.Transaction.SIGHASH_ALL | bitcoin.Transaction.SIGHASH_BITCOINCASHBIP143;
+
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
 				/*if ($scope.segwit.segwit) {
 					txb.sign (j, pair1, redeemScript, null, txs[j].value * 100000000, witnessScript);
 					txb.sign (j, pair2, redeemScript, null, txs[j].value * 100000000, witnessScript);
 				} else {*/
-					txb.sign (j, pair1, redeemScript);
-					txb.sign (j, pair2, redeemScript);
+					txb.sign (j, pair1, redeemScript, null, hashType, txs[j].value * 100000000);
+					txb.sign (j, pair2, redeemScript, null, hashType, txs[j].value * 100000000);
 				//}
 			}
 
