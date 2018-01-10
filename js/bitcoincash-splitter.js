@@ -4,13 +4,7 @@ var bitcoincashSplitter = angular.module('bitcoincashSplitter', [
 
 
 bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
-	if (bitcoinnetwork == 'btc') {
-		var bnetwork = bitcoin.networks.bitcoin;
-		var cnetwork = 'BTC';
-	} else {
-		var bnetwork = bitcoin.networks.testnet;
-		var cnetwork = 'BTCTEST';
-	}
+	var bnetwork = bitcoin.networks.bitcoin;
 
     $scope.tab = 'home';
 	$scope.transaction = { address: '', txid: '' };
@@ -217,15 +211,15 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		//console.log ('segwit',$scope.segwit.segwit);
 
 		/* Get unspent */
-		$http.get ('https://chain.so/api/v2/get_tx_unspent/' + cnetwork + '/' + address).success (function (data) {
-			var txs = data.data.txs;
+		$http.get ('https://bch-insight.bitpay.com/api/addr/' + address + '/utxo').success (function (data) {
+			var txs = data.data;
 			var txb = new bitcoin.TransactionBuilder (bnetwork);
 			var cumulative = 0.0;
 			var fee = $scope.calculateFee (txs.length);
 
 			for (var i = 0; i < txs.length; i++) {
-				cumulative += parseFloat (txs[i].value);
-				txb.addInput (txs[i].txid, txs[i].output_no);
+				cumulative += parseFloat (txs[i].amount);
+				txb.addInput (txs[i].txid, txs[i].vout);
 			}
 
 			if (cumulative == 0 || cumulative - fee < 0) {
@@ -264,7 +258,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			console.log (txhex);
 
 			/* Broadcast */
-			$http.post ('https://chain.so/api/v2/send_tx/' + cnetwork, {tx_hex: txhex}).success (function (data) {
+			/*$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
 				console.log (data);
 				$scope.transaction.txid = data.data.txid;
 				$scope.transaction.address = $scope.npo.address;
@@ -274,7 +268,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 				$scope.npo.error = 'XNB';
 				$scope.deployError ('XNB');
 				$scope.npo.loading = false;	
-			});
+			});*/
 		});
     };
 
@@ -474,15 +468,15 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		//}
 
 		/* Get unspent */
-		$http.get ('https://chain.so/api/v2/get_tx_unspent/' + cnetwork + '/' + $scope.user.backup.data.address).success (function (data) {
-			var txs = data.data.txs;
+		$http.get ('https://bch-insight.bitpay.com/api/addr/' + address + '/utxo').success (function (data) {
+			var txs = data.data;
 			var txb = new bitcoin.TransactionBuilder (bnetwork);
 			var cumulative = 0.0;
 			var fee = $scope.calculateFee (txs.length);
 
 			for (var i = 0; i < txs.length; i++) {
-				cumulative += parseFloat (txs[i].value);
-				txb.addInput (txs[i].txid, txs[i].output_no);
+				cumulative += parseFloat (txs[i].amount);
+				txb.addInput (txs[i].txid, txs[i].vout);
 			}
 
 
@@ -516,9 +510,10 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			/* Create the signed transaction */
 			var tx = txb.build ();
 			var txhex = tx.toHex ();
+			console.log (txhex);
 
 			/* Broadcast */
-			$http.post ('https://chain.so/api/v2/send_tx/' + cnetwork, {tx_hex: txhex}).success (function (data) {
+			/*$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
 				console.log (data);
 				$scope.transaction.txid = data.data.txid;
 				$scope.transaction.address = $scope.user.address;
@@ -528,7 +523,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 				$scope.user.error = 'XNB';
 				$scope.deployError ('XNB');
 				$scope.user.loading = false;	
-			});
+			});*/
 		});
     };
 });
