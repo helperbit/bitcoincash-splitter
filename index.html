@@ -36,6 +36,7 @@
 	<script type="text/javascript" src="bower_components/crypto-js/crypto-js.js"></script>
 	<script type="text/javascript" src="bower_components/buffer/buffer.min.js"></script>
     <script type="text/javascript" src="lib/bitcoinjs.js"></script>
+    <!--<script type="text/javascript" src="lib/bitcoincash.min.js"></script>-->
     <script type="text/javascript" src="lib/bip39.js"></script>
     <script type="text/javascript" src="js/network.js"></script>
     <script type="text/javascript" src="js/bitcoincash-splitter.js"></script>
@@ -78,7 +79,7 @@
             </div>
             <div class="modal-body">
                 The transaction was sent to the address {{transaction.address}}. You can see the transaction in any
-                bitcoin block explorer <a href="https://chain.so/tx/BTC/{{transaction.txid}}" target="_blank">{{transaction.txid}}</a>.
+                bitcoincash block explorer <a href="https://bch-insight.bitpay.com/tx/{{transaction.txid}}" target="_blank">{{transaction.txid}}</a>.
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

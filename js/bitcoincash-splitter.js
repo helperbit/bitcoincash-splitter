@@ -21,7 +21,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 	});*/
 
 	$scope.calculateFee = function (inputn) {
-		return (2 * 34 + inputn * 180 + 10) * $scope.fee[0].conservative / 100000000.0;
+		return (2 * 34 + inputn * 180 + 10) * $scope.fee[0].conservative;
 	};
 
 	$scope.deployError = function (e) {
@@ -37,7 +37,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
                 $scope.user = { 
                     mnemonic: '',
                     backpass: '',
-                    address: '',
+                    address: '1AupA4iFyE9J3PyHUwCRYK6SbBWrjLSd5w',
                     backup: { file: '', data: {}, password: '' },
                     error: '',
 					loading: false
@@ -48,7 +48,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
                 $scope.npo = { 
 					n: 3,
 					pubkeys: [],
-                    address: '',
+                    address: '1AupA4iFyE9J3PyHUwCRYK6SbBWrjLSd5w',
                     backup: [ { error: '', backpass: '', file: '', data: {}, password: '' } ],
                     error: '',
 					loading: false
@@ -194,33 +194,24 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 
 		/* Evalute the reedem script */
 		var pubkeys_raw = $scope.npo.pubkeys.map(function (hex /*: string*/) { return new buffer.Buffer (hex, 'hex'); });
-
-
-		/*if ($scope.segwit.segwit) {
-			var witnessScript = bitcoin.script.multisig.output.encode (parseInt ($scope.npo.n), pubkeys_raw);
-			var redeemScript = bitcoin.script.witnessScriptHash.output.encode (bitcoin.crypto.sha256(witnessScript));
-			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160(redeemScript));
-			var address = bitcoin.address.fromOutputScript(scriptPubKey, bnetwork);			
-		} else {*/
-			var redeemScript = bitcoin.script.multisig.output.encode (parseInt ($scope.npo.n), pubkeys_raw);
-			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
-			var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
-			var spk = bitcoin.script.pubKey.output.encode(pubkeys_raw);
-		//}
+			
+		var redeemScript = bitcoin.script.multisig.output.encode (parseInt ($scope.npo.n), pubkeys_raw);
+		var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
+		var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
 
 		console.log (address);
-		//console.log ('segwit',$scope.segwit.segwit);
 
 		/* Get unspent */
-		$http.get ('https://bch-insight.bitpay.com/api/addr/' + address + '/utxo').success (function (data) {
+		$http.get ('https://api.blocktrail.com/v1/BCC/address/' + address + '/unspent-outputs?api_key=136d6fb4f662c7d177812bd7a8ab3d0918f22d13').success (function (data) {
 			var txs = data.data;
 			var txb = new bitcoin.TransactionBuilder (bnetwork);
 			var cumulative = 0.0;
 			var fee = $scope.calculateFee (txs.length);
 
 			for (var i = 0; i < txs.length; i++) {
-				cumulative += parseFloat (txs[i].amount);
-				txb.addInput (txs[i].txid, txs[i].vout, bitcoin.Transaction.DEFAULT_SEQUENCE, spk);
+				cumulative += parseInt (txs[i].value);
+				console.log ('value input', txs[i].value)
+				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, redeemScript);
 			}
 
 			if (cumulative == 0 || cumulative - fee < 0) {
@@ -231,7 +222,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			}
 
 			try {
-				txb.addOutput($scope.npo.address, Math.floor ((cumulative - fee) * 100000000));
+				txb.addOutput($scope.npo.address, cumulative - fee);
 			} catch (err) {
 				$scope.npo.error = 'XWD';
 				$scope.deployError ('XWD');
@@ -247,26 +238,24 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
 				for (var z = 0; z < parseInt ($scope.npo.n); z++) {
-					/*if ($scope.segwit.segwit) {
-						txb.sign (j, $scope.npo.backup[z].pair, redeemScript, null, txs[j].value * 100000000, witnessScript);
-					} else {*/
-						txb.sign (j, $scope.npo.backup[z].pair, redeemScript, null, hashType, txs[j].value * 100000000);
-					//}
+					txb.sign (j, $scope.npo.backup[z].pair, null, hashType, txs[j].value);
+					console.log ('value sign', txs[j].value)
 				}
 			}
 
-			/* Create the signed transaction */
-			var txb1 = bitcoin.Transaction.fromHex (txb.buildIncomplete ().toHex (), bnetwork);
-			var txb2 = bitcoin.TransactionBuilder.fromTransaction (txb1, bnetwork);
+
+			/*var tx = txb.build ();
+			var txhex = tx.toHex ();*/
+
+			var txb2 = bitcoin.TransactionBuilder.fromTransaction (txb.build (), bnetwork, bitcoin.Transaction.FORKID_BCH);
 
 			var tx = txb2.build ();
 			var txhex = tx.toHex ();
 			console.log (txhex);
 
 			/* Broadcast */
-			/*$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
-				console.log (data);
-				$scope.transaction.txid = data.data.txid;
+			$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
+				$scope.transaction.txid = data.txid;
 				$scope.transaction.address = $scope.npo.address;
 				$('#sentModal').modal ('show');
 				$scope.npo.loading = false;
@@ -274,7 +263,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 				$scope.npo.error = 'XNB';
 				$scope.deployError ('XNB');
 				$scope.npo.loading = false;	
-			});*/
+			});
 		});
     };
 
@@ -462,30 +451,21 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		
 		var pubkeys_raw = $scope.user.backup.data.pubkeys.map(function (hex /*: string*/) { return new buffer.Buffer (hex, 'hex'); });
 
-		/*if ($scope.segwit.segwit) {
-			var witnessScript = bitcoin.script.multisig.output.encode (2, pubkeys_raw);
-			var redeemScript = bitcoin.script.witnessScriptHash.output.encode (bitcoin.crypto.sha256(witnessScript));
-			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160(redeemScript));
-			var address = bitcoin.address.fromOutputScript(scriptPubKey, bnetwork);			
-		} else {*/
-			var redeemScript = bitcoin.script.multisig.output.encode (2, pubkeys_raw);
-			var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
-			var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
-			var spk = bitcoin.script.pubKey.output.encode(pubkeys_raw);
-		//}
+		var redeemScript = bitcoin.script.multisig.output.encode (2, pubkeys_raw);
+		var scriptPubKey = bitcoin.script.scriptHash.output.encode (bitcoin.crypto.hash160 (redeemScript));
+		var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
 
 		/* Get unspent */
-		$http.get ('https://bch-insight.bitpay.com/api/addr/' + address + '/utxo').success (function (data) {
+		$http.get ('https://api.blocktrail.com/v1/BCC/address/' + address + '/unspent-outputs?api_key=136d6fb4f662c7d177812bd7a8ab3d0918f22d13').success (function (data) {
 			var txs = data.data;
 			var txb = new bitcoin.TransactionBuilder (bnetwork);
 			var cumulative = 0.0;
 			var fee = $scope.calculateFee (txs.length);
 
 			for (var i = 0; i < txs.length; i++) {
-				cumulative += parseFloat (txs[i].amount);
-				txb.addInput (txs[i].txid, txs[i].vout, bitcoin.Transaction.DEFAULT_SEQUENCE, spk);
+				cumulative += parseFloat (txs[i].value);
+				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, redeemScript);
 			}
-
 
 			if (cumulative == 0 || cumulative - fee < 0) {
 				$scope.user.error = 'XWE';
@@ -495,7 +475,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			}
 
 			try {
-				txb.addOutput($scope.user.address, Math.floor ((cumulative - fee) * 100000000));
+				txb.addOutput($scope.user.address, cumulative - fee);
 			} catch (err) {
 				$scope.user.error = 'XWD';
 				$scope.deployError ('XWD');
@@ -510,13 +490,8 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
-				/*if ($scope.segwit.segwit) {
-					txb.sign (j, pair1, redeemScript, null, txs[j].value * 100000000, witnessScript);
-					txb.sign (j, pair2, redeemScript, null, txs[j].value * 100000000, witnessScript);
-				} else {*/
-					txb.sign (j, pair1, redeemScript, null, hashType, txs[j].value * 100000000);
-					txb.sign (j, pair2, redeemScript, null, hashType, txs[j].value * 100000000);
-				//}
+				txb.sign (j, pair1, null, hashType, txs[j].value);
+				txb.sign (j, pair2, null, hashType, txs[j].value);
 			}
 
 			/* Create the signed transaction */
@@ -525,7 +500,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			console.log (txhex);
 
 			/* Broadcast */
-			/*$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
+			$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
 				console.log (data);
 				$scope.transaction.txid = data.data.txid;
 				$scope.transaction.address = $scope.user.address;
@@ -535,7 +510,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 				$scope.user.error = 'XNB';
 				$scope.deployError ('XNB');
 				$scope.user.loading = false;	
-			});*/
+			});
 		});
     };
 });

@@ -15,12 +15,13 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "^1.5.8",
+    "angular": "=1.5.8",
     "bootstrap": "^3.3.7",
     "buffer": "^3.46.1",
     "bitcoinjs-lib": "github:bitcoinjs/bitcoinjs-lib#opt-in-bitcoincash-sighash",
     "crypto-js": "^3.1.6",
     "font-awesome": "^4.6.3",
-    "ng-file-upload-shim": "^12.2.9"
+    "ng-file-upload-shim": "^12.2.9",
+    "bitcoincashjs": "^0.1.9"
   }
 }
