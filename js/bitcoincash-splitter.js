@@ -211,7 +211,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			for (var i = 0; i < txs.length; i++) {
 				cumulative += parseInt (txs[i].value);
 				console.log ('value input', txs[i].value)
-				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, redeemScript);
+				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, scriptPubKey);
 			}
 
 			if (cumulative == 0 || cumulative - fee < 0) {
@@ -244,13 +244,13 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			}
 
 
-			/*var tx = txb.build ();
-			var txhex = tx.toHex ();*/
+			var tx = txb.build ();
+			var txhex = tx.toHex ();
 
-			var txb2 = bitcoin.TransactionBuilder.fromTransaction (txb.build (), bnetwork, bitcoin.Transaction.FORKID_BCH);
+			/*var txb2 = bitcoin.TransactionBuilder.fromTransaction (txb.build (), bnetwork, bitcoin.Transaction.FORKID_BCH);
 
 			var tx = txb2.build ();
-			var txhex = tx.toHex ();
+			var txhex = tx.toHex ();*/
 			console.log (txhex);
 
 			/* Broadcast */
@@ -464,7 +464,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 
 			for (var i = 0; i < txs.length; i++) {
 				cumulative += parseFloat (txs[i].value);
-				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, redeemScript);
+				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, scriptPubKey);
 			}
 
 			if (cumulative == 0 || cumulative - fee < 0) {
