@@ -238,7 +238,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
 				for (var z = 0; z < parseInt ($scope.npo.n); z++) {
-					txb.sign (j, $scope.npo.backup[z].pair, null, hashType, txs[j].value);
+					txb.sign (j, $scope.npo.backup[z].pair, redeemScript, hashType, txs[j].value);
 					console.log ('value sign', txs[j].value)
 				}
 			}
@@ -490,8 +490,8 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 
 			/* Add signatures */
 			for (var j = 0; j < txb.tx.ins.length; j++) {
-				txb.sign (j, pair1, null, hashType, txs[j].value);
-				txb.sign (j, pair2, null, hashType, txs[j].value);
+				txb.sign (j, pair1, redeemScript, hashType, txs[j].value);
+				txb.sign (j, pair2, redeemScript, hashType, txs[j].value);
 			}
 
 			/* Create the signed transaction */
