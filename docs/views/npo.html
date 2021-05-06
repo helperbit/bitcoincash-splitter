@@ -55,7 +55,7 @@
 
     <div class="form-group">
         <label for="inAddress">Destination Bitcoin address:</label>
-        <input readonly ng-model="npo.address" type="text" class="form-control" id="inAddress" placeholder="Address" />
+        <input ng-model="npo.address" type="text" class="form-control" id="inAddress" placeholder="Address" />
     </div>
     <button ng-disabled="npo.loading" class="btn btn-red btn-block" ng-click="recoverNPO()">
         <i class="fa fa-spin fa-refresh" ng-if="npo.loading"></i> Split your bitcoincash
