@@ -12,14 +12,6 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 	$scope.segwit = { segwit: false };
 	$scope.fee = [ { conservative: 30 } ];
 
-	/*$http.get ('https://estimatesmartfee.com/json.json').success (function (data) {
-		$scope.fee = data;
-		if ($scope.fee.length == 0)
-			$scope.fee = [ { conservative: 172 } ];
-	}).error (function (e) {
-		$scope.fee = [ { conservative: 172 } ];
-	});*/
-
 	$scope.calculateFee = function (inputn) {
 		return (2 * 34 + inputn * 180 + 10) * $scope.fee[0].conservative;
 	};
@@ -37,7 +29,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
                 $scope.user = { 
                     mnemonic: '',
                     backpass: '',
-                    address: '1AupA4iFyE9J3PyHUwCRYK6SbBWrjLSd5w',
+                    address: '',
                     backup: { file: '', data: {}, password: '' },
                     error: '',
 					loading: false
@@ -48,7 +40,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
                 $scope.npo = { 
 					n: 3,
 					pubkeys: [],
-                    address: '1AupA4iFyE9J3PyHUwCRYK6SbBWrjLSd5w',
+                    address: '',
                     backup: [ { error: '', backpass: '', file: '', data: {}, password: '' } ],
                     error: '',
 					loading: false
@@ -202,16 +194,16 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		console.log (address);
 
 		/* Get unspent */
-		$http.get ('https://api.blocktrail.com/v1/BCC/address/' + address + '/unspent-outputs?api_key=136d6fb4f662c7d177812bd7a8ab3d0918f22d13').success (function (data) {
-			var txs = data.data;
+		$http.get ('https://explorer.api.bitcoin.com/bch/v1/addr/' + address + '/utxo').success (function (data) {
+			var txs = data;
 			var txb = new bitcoin.TransactionBuilder (bnetwork);
 			var cumulative = 0.0;
 			var fee = $scope.calculateFee (txs.length);
 
 			for (var i = 0; i < txs.length; i++) {
-				cumulative += parseInt (txs[i].value);
-				console.log ('value input', txs[i].value)
-				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, scriptPubKey);
+				cumulative += parseInt (txs[i].amount * 100000000);
+				console.log ('value input', txs[i].amount)
+				txb.addInput (txs[i].txid, txs[i].vuout, bitcoin.Transaction.DEFAULT_SEQUENCE, scriptPubKey);
 			}
 
 			if (cumulative == 0 || cumulative - fee < 0) {
@@ -254,7 +246,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			console.log (txhex);
 
 			/* Broadcast */
-			$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
+			$http.get ('https://rest.bitcoin.com/v2/rawtransactions/sendRawTransaction/' + txhex).success (function (data) {
 				$scope.transaction.txid = data.txid;
 				$scope.transaction.address = $scope.npo.address;
 				$('#sentModal').modal ('show');
@@ -456,15 +448,15 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 		var address = bitcoin.address.fromOutputScript (scriptPubKey, bnetwork);
 
 		/* Get unspent */
-		$http.get ('https://api.blocktrail.com/v1/BCC/address/' + address + '/unspent-outputs?api_key=136d6fb4f662c7d177812bd7a8ab3d0918f22d13').success (function (data) {
-			var txs = data.data;
+		$http.get ('https://explorer.api.bitcoin.com/bch/v1/addr/' + address + '/utxo').success (function (data) {
+			var txs = data;
 			var txb = new bitcoin.TransactionBuilder (bnetwork);
 			var cumulative = 0.0;
 			var fee = $scope.calculateFee (txs.length);
 
 			for (var i = 0; i < txs.length; i++) {
-				cumulative += parseFloat (txs[i].value);
-				txb.addInput (txs[i].hash, txs[i].index, bitcoin.Transaction.DEFAULT_SEQUENCE, scriptPubKey);
+				cumulative += parseInt (txs[i].amount * 100000000);
+				txb.addInput (txs[i].txid, txs[i].vout, bitcoin.Transaction.DEFAULT_SEQUENCE, scriptPubKey);
 			}
 
 			if (cumulative == 0 || cumulative - fee < 0) {
@@ -500,7 +492,7 @@ bitcoincashSplitter.controller('RecoveryCtrl', function($scope, $http) {
 			console.log (txhex);
 
 			/* Broadcast */
-			$http.post ('https://bch-insight.bitpay.com/api/tx/send', {rawtx: txhex}).success (function (data) {
+			$http.get ('https://rest.bitcoin.com/v2/rawtransactions/sendRawTransaction/' + txhex).success (function (data) {
 				console.log (data);
 				$scope.transaction.txid = data.data.txid;
 				$scope.transaction.address = $scope.user.address;

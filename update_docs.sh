@@ -1,2 +1,2 @@
 #!/bin/bash
-cp -r index.html lib/ img/ views/ css/ js/ bower_components/ docs/
+cp -r index.html lib/ img/ views/ css/ js/ docs/ #bower_components/ docs/
